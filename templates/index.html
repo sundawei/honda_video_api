@@ -340,7 +340,8 @@
             <div class="section">
                 <h2 class="section-title">
                     <span>カメラリスト</span>
-                    <button class="btn" onclick="showAddCameraModal()">+ カメラを追加</button>
+                    <!-- 添加相机功能已隐藏 -->
+                    <!-- <button class="btn" onclick="showAddCameraModal()">+ カメラを追加</button> -->
                 </h2>
                 <div id="cameraList" class="camera-list">
                     <!-- 動的にロード -->
@@ -414,7 +415,7 @@
                 }
 
                 if (data.cameras.length === 0) {
-                    cameraList.innerHTML = '<div class="empty-state"><h3>カメラが登録されていません</h3><p>右上のボタンからカメラを追加してください</p></div>';
+                    cameraList.innerHTML = '<div class="empty-state"><h3>カメラが登録されていません</h3><p>設定ファイルでカメラを設定してください</p></div>';
                     return;
                 }
 
@@ -438,7 +439,8 @@
                             ${!camera.is_recording ?
                                 `<button class="btn btn-success" onclick="startRecording('${camera.id}')">録画開始</button>` :
                                 `<button class="btn btn-danger" onclick="stopRecording('${camera.id}')">録画停止</button>`}
-                            <button class="btn btn-danger" onclick="deleteCamera('${camera.id}')">削除</button>
+                            <!-- 删除按钮已隐藏 -->
+                            <!-- <button class="btn btn-danger" onclick="deleteCamera('${camera.id}')">削除</button> -->
                         </div>
                     </div>
                 `).join('');

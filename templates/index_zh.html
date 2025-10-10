@@ -275,7 +275,8 @@
             <div class="section">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h2 class="section-title">摄像机列表</h2>
-                    <button class="btn" onclick="showAddCameraModal()">+ 添加摄像机</button>
+                    <!-- 添加相机功能已隐藏 -->
+                    <!-- <button class="btn" onclick="showAddCameraModal()">+ 添加摄像机</button> -->
                 </div>
                 <div id="cameraList" class="camera-list">
                     <!-- 动态加载摄像机卡片 -->
@@ -351,7 +352,7 @@
                 }
 
                 if (data.cameras.length === 0) {
-                    cameraList.innerHTML = '<div class="empty-state"><h3>暂无摄像机</h3><p>点击右上角按钮添加摄像机</p></div>';
+                    cameraList.innerHTML = '<div class="empty-state"><h3>暂无摄像机</h3><p>请在配置文件中设置摄像机</p></div>';
                     return;
                 }
 
@@ -375,7 +376,8 @@
                             ${!camera.is_recording ?
                                 `<button class="btn btn-success" onclick="startRecording('${camera.id}')">开始录像</button>` :
                                 `<button class="btn btn-danger" onclick="stopRecording('${camera.id}')">停止录像</button>`}
-                            <button class="btn btn-danger" onclick="deleteCamera('${camera.id}')">删除</button>
+                            <!-- 删除按钮已隐藏 -->
+                            <!-- <button class="btn btn-danger" onclick="deleteCamera('${camera.id}')">删除</button> -->
                         </div>
                     </div>
                 `).join('');
