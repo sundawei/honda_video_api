@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>システム設定 - IPカメラレコーダー</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif;
+            background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(63, 81, 181, 0.15);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ff4081, #3f51b5, #00bcd4);
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 8px;
+            font-weight: 500;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            opacity: 0.95;
+            font-weight: 300;
+        }
+
+        .nav {
+            background: #fafafa;
+            padding: 16px 30px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .nav a {
+            color: #3f51b5;
+            text-decoration: none;
+            margin-right: 24px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav a:hover {
+            color: #5c6bc0;
+        }
+
+        .content {
+            padding: 35px;
+        }
+
+        .setting-section {
+            margin-bottom: 32px;
+            padding: 24px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 10px;
+            border-left: 4px solid #3f51b5;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .setting-section h2 {
+            color: #3f51b5;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            font-weight: 500;
+        }
+
+        .setting-item {
+            margin-bottom: 22px;
+        }
+
+        .setting-item label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: #424242;
+            font-size: 0.95em;
+        }
+
+        .setting-item .description {
+            font-size: 0.85em;
+            color: #757575;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .setting-item input[type="number"],
+        .setting-item input[type="text"],
+        .setting-item select {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.95em;
+            transition: all 0.3s;
+        }
+
+        .setting-item input:focus {
+            outline: none;
+            border-color: #3f51b5;
+            box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.1);
+        }
+
+        .setting-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 500;
+            transition: all 0.3s;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(63, 81, 181, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #9e9e9e 0%, #757575 100%);
+            margin-left: 12px;
+        }
+
+        .save-status {
+            margin-top: 24px;
+            padding: 16px 20px;
+            border-radius: 6px;
+            display: none;
+            font-weight: 500;
+        }
+
+        .save-status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+
+        .save-status.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        .current-value {
+            display: inline-block;
+            margin-left: 12px;
+            padding: 4px 12px;
+            background: #e3f2fd;
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: #1976d2;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ システム設定</h1>
+            <p>録画パラメータとシステムオプションの設定</p>
+        </div>
+
+        <div class="nav">
+            <a href="/">← ホームに戻る</a>
+            <a href="/settings">システム設定</a>
+        </div>
+
+        <div class="content">
+            <form id="settingsForm">
+                <!-- 録画設定 -->
+                <div class="setting-section">
+                    <h2>📹 録画設定</h2>
+
+                    <div class="setting-item">
+                        <label>セグメント時間（秒）<span class="current-value" id="current_segment">現在: 読み込み中...</span></label>
+                        <div class="description">各録画ファイルの長さ。推奨：300-1800秒（5-30分）</div>
+                        <input type="number" id="segment_duration" name="segment_duration" min="60" max="3600" step="60" value="600">
+                    </div>
+
+                    <div class="setting-item">
+                        <label>録画保存ディレクトリ<span class="current-value" id="current_dir">現在: 読み込み中...</span></label>
+                        <div class="description">録画ファイルの保存場所（絶対パスまたは相対パス）</div>
+                        <input type="text" id="output_dir" name="output_dir" value="recordings">
+                    </div>
+                </div>
+
+                <!-- ストレージ管理 -->
+                <div class="setting-section">
+                    <h2>💾 ストレージ管理</h2>
+
+                    <div class="setting-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="enable_auto_delete" name="enable_auto_delete" checked>
+                            <span>古い録画を自動削除する</span>
+                        </label>
+                        <div class="description">保存期間を過ぎた録画ファイルを自動的に削除します</div>
+                    </div>
+
+                    <div class="setting-item">
+                        <label>録画保存期間（日）<span class="current-value" id="current_retention">現在: 読み込み中...</span></label>
+                        <div class="description">この日数を超えた録画は自動削除されます。推奨：3-30日</div>
+                        <input type="number" id="retention_days" name="retention_days" min="1" max="365" value="7">
+                    </div>
+                </div>
+
+                <!-- FFmpeg設定 -->
+                <div class="setting-section">
+                    <h2>🎬 FFmpeg設定</h2>
+
+                    <div class="setting-item">
+                        <label>FFmpegパス<span class="current-value" id="current_ffmpeg">現在: 読み込み中...</span></label>
+                        <div class="description">FFmpeg実行ファイルのパス。Windowsの場合はフルパスを入力できます</div>
+                        <input type="text" id="ffmpeg_path" name="ffmpeg_path" value="ffmpeg">
+                    </div>
+                </div>
+
+                <div class="save-status" id="saveStatus"></div>
+
+                <div style="margin-top: 32px;">
+                    <button type="submit" class="btn">💾 設定を保存</button>
+                    <button type="button" class="btn btn-secondary" onclick="loadSettings()">🔄 再読み込み</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        // 現在の設定を読み込む
+        async function loadSettings() {
+            try {
+                const response = await fetch(`${API_BASE}/settings`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const settings = data.settings;
+
+                    // 録画設定
+                    document.getElementById('segment_duration').value = settings.recording.segment_duration;
+                    document.getElementById('output_dir').value = settings.recording.output_dir;
+                    document.getElementById('enable_auto_delete').checked = settings.recording.enable_auto_delete;
+                    document.getElementById('retention_days').value = settings.recording.retention_days;
+
+                    // FFmpeg設定
+                    document.getElementById('ffmpeg_path').value = settings.ffmpeg.path;
+
+                    // 現在値の表示を更新
+                    document.getElementById('current_segment').textContent = `現在: ${settings.recording.segment_duration}秒`;
+                    document.getElementById('current_dir').textContent = `現在: ${settings.recording.output_dir}`;
+                    document.getElementById('current_retention').textContent = `現在: ${settings.recording.retention_days}日`;
+                    document.getElementById('current_ffmpeg').textContent = `現在: ${settings.ffmpeg.path}`;
+
+                    showStatus('設定を読み込みました', 'success');
+                } else {
+                    showStatus('設定の読み込みに失敗しました', 'error');
+                }
+            } catch (error) {
+                console.error('設定読み込みエラー:', error);
+                showStatus('設定の読み込みに失敗しました：ネットワークエラー', 'error');
+            }
+        }
+
+        // 設定を保存
+        document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const settings = {
+                recording: {
+                    segment_duration: parseInt(document.getElementById('segment_duration').value),
+                    output_dir: document.getElementById('output_dir').value,
+                    enable_auto_delete: document.getElementById('enable_auto_delete').checked,
+                    retention_days: parseInt(document.getElementById('retention_days').value)
+                },
+                ffmpeg: {
+                    path: document.getElementById('ffmpeg_path').value
+                }
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/settings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showStatus('✅ 設定を保存しました！新しい設定はサーバー再起動後に有効になります。', 'success');
+                    // 最新の値を表示するため再読み込み
+                    setTimeout(() => loadSettings(), 1000);
+                } else {
+                    showStatus('❌ 保存失敗: ' + (data.detail || data.message || '不明なエラー'), 'error');
+                }
+            } catch (error) {
+                console.error('設定保存エラー:', error);
+                showStatus('❌ 保存失敗：ネットワークエラー', 'error');
+            }
+        });
+
+        // ステータスメッセージを表示
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('saveStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `save-status ${type}`;
+            statusDiv.style.display = 'block';
+
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // ページ読み込み時に設定を読み込む
+        window.onload = function() {
+            loadSettings();
+        };
+    </script>
+</body>
+</html>

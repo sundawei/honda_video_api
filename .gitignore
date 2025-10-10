@@ -1,0 +1,85 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env
+.venv
+
+# Dependencies
+libs/
+lib/
+lib64/
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Recordings and logs
+recordings/
+*.mp4
+*.avi
+*.mkv
+*.mov
+*.wmv
+*.flv
+*.webm
+logs/
+*.log
+
+# Test files
+test_*.mp4
+test_*.avi
+*.test.mp4
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+tmp/
+temp/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Config with sensitive data (optional)
+# config.yaml
+
+# License files
+license.dat
+*.lic
+
+# Package files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Release folders
+release/
+Release/
+deploy/
+Deploy/
+PublishedApp/
+
+# OS specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.Spotlight-V100
+.Trashes

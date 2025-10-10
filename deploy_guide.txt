@@ -1,0 +1,72 @@
+====================================================
+    IP Camera Recorder API - Deployment Guide
+====================================================
+
+PROBLEM FOUND:
+--------------
+The libs folder contains compiled Python extensions (.pyd files)
+that are specific to the machine where they were built.
+These files cannot be directly copied to another machine.
+
+SOLUTIONS:
+----------
+
+Option 1: Auto-Install Script (RECOMMENDED)
+--------------------------------------------
+Use: start_api_auto.bat
+
+This script will:
+- Check if dependencies exist and are compatible
+- Automatically install dependencies if needed
+- Start the API server
+
+Just copy these files to the target machine:
+- app.py
+- recorder.py
+- recording_manager.py
+- camera_manager.py
+- video_processor.py
+- config.yaml
+- requirements.txt
+- start_api_auto.bat
+- static/ (folder)
+- templates/ (folder)
+
+Then run: start_api_auto.bat
+
+
+Option 2: Manual Installation on Each Machine
+----------------------------------------------
+On each target machine, run:
+1. install_dependencies.bat
+2. start_api.bat
+
+
+Option 3: Virtual Environment (Most Portable)
+----------------------------------------------
+1. Run: create_portable_env.bat
+2. Copy entire folder including 'venv' directory
+3. On target machine run: start_api_portable.bat
+
+Note: This works best when both machines have
+      the same Python version and architecture.
+
+
+Option 4: Use PyInstaller (Create .exe)
+----------------------------------------
+Install PyInstaller:
+  pip install pyinstaller
+
+Create executable:
+  pyinstaller --onefile --add-data "static;static" --add-data "templates;templates" app.py
+
+This creates a standalone .exe file that doesn't
+require Python to be installed.
+
+
+RECOMMENDED APPROACH:
+---------------------
+Use start_api_auto.bat - it handles everything automatically
+and ensures compatibility with each target machine.
+
+====================================================

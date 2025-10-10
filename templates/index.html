@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPカメラレコーダー - 録画管理システム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif;
+            background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(63, 81, 181, 0.15);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ff4081, #3f51b5, #00bcd4);
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 8px;
+            font-weight: 500;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            font-size: 1em;
+            opacity: 0.95;
+            font-weight: 300;
+        }
+
+        .header .settings-link {
+            margin-top: 15px;
+        }
+
+        .header .settings-link a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 24px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 0.9em;
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: all 0.3s;
+        }
+
+        .header .settings-link a:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-2px);
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 35px;
+        }
+
+        .section-title {
+            font-size: 1.4em;
+            margin-bottom: 20px;
+            color: #3f51b5;
+            border-bottom: 2px solid #3f51b5;
+            padding-bottom: 12px;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%);
+            color: white;
+            border: none;
+            padding: 11px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.3s;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(63, 81, 181, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e57373 0%, #f44336 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
+        }
+
+        .camera-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        .camera-card {
+            border: 1px solid #e3f2fd;
+            border-radius: 10px;
+            padding: 24px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .camera-card:hover {
+            box-shadow: 0 8px 24px rgba(63, 81, 181, 0.15);
+            transform: translateY(-4px);
+            border-color: #bbdefb;
+        }
+
+        .camera-card h3 {
+            color: #3f51b5;
+            margin-bottom: 14px;
+            font-weight: 500;
+            font-size: 1.2em;
+        }
+
+        .camera-info {
+            margin: 12px 0;
+            font-size: 0.9em;
+            color: #546e7a;
+            line-height: 1.6;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-size: 0.8em;
+            font-weight: 500;
+            margin: 8px 0;
+            letter-spacing: 0.3px;
+        }
+
+        .status-recording {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-stopped {
+            background: #eceff1;
+            color: #607d8b;
+        }
+
+        .status-disabled {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .camera-actions {
+            margin-top: 18px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .camera-actions button {
+            flex: 1;
+            font-size: 0.9em;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #424242;
+            font-size: 0.95em;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.95em;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #3f51b5;
+            box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            max-width: 520px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            font-size: 1.5em;
+            margin-bottom: 24px;
+            color: #3f51b5;
+            font-weight: 500;
+        }
+
+        .close-btn {
+            float: right;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #9e9e9e;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover {
+            color: #424242;
+        }
+
+        .system-status {
+            background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%);
+            color: white;
+            padding: 28px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(63, 81, 181, 0.2);
+        }
+
+        .status-item h3 {
+            font-size: 2.5em;
+            margin-bottom: 8px;
+            font-weight: 300;
+        }
+
+        .status-item p {
+            opacity: 0.95;
+            font-size: 0.95em;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 40px;
+            color: #9e9e9e;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📹 IPカメラレコーダー</h1>
+            <p>カメラ録画管理システム</p>
+            <div class="settings-link">
+                <a href="/settings">⚙️ システム設定</a>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- システムステータス -->
+            <div class="section">
+                <div id="systemStatus" class="system-status">
+                    <div class="status-item">
+                        <h3 id="totalCameras">0</h3>
+                        <p>総カメラ数</p>
+                    </div>
+                    <div class="status-item">
+                        <h3 id="enabledCameras">0</h3>
+                        <p>有効</p>
+                    </div>
+                    <div class="status-item">
+                        <h3 id="recordingCameras">0</h3>
+                        <p>録画中</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- カメラリスト -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span>カメラリスト</span>
+                    <button class="btn" onclick="showAddCameraModal()">+ カメラを追加</button>
+                </h2>
+                <div id="cameraList" class="camera-list">
+                    <!-- 動的にロード -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- カメラ追加モーダル -->
+    <div id="addCameraModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeAddCameraModal()">&times;</span>
+            <h2 class="modal-header">カメラを追加</h2>
+            <form onsubmit="addCamera(event)">
+                <div class="form-group">
+                    <label>カメラID *</label>
+                    <input type="text" id="cameraId" required placeholder="例: camera_01">
+                </div>
+                <div class="form-group">
+                    <label>カメラ名 *</label>
+                    <input type="text" id="cameraName" required placeholder="例: 玄関カメラ">
+                </div>
+                <div class="form-group">
+                    <label>RTSP アドレス *</label>
+                    <input type="text" id="rtspUrl" required placeholder="rtsp://admin:password@192.168.1.100:554/stream1">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="cameraEnabled" checked> 有効にする
+                    </label>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">追加</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        // システムステータスを読み込む
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/status`);
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('totalCameras').textContent = data.status.total_cameras;
+                    document.getElementById('enabledCameras').textContent = data.status.enabled_cameras;
+                    document.getElementById('recordingCameras').textContent = data.status.recording_cameras;
+                }
+            } catch (error) {
+                console.error('ステータス読み込みエラー:', error);
+            }
+        }
+
+        // カメラリストを読み込む
+        async function loadCameras() {
+            try {
+                const response = await fetch(`${API_BASE}/cameras`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const cameraList = document.getElementById('cameraList');
+
+                if (!data || !data.cameras) {
+                    console.error('無効なデータ形式:', data);
+                    cameraList.innerHTML = '<div class="empty-state"><h3>データ読み込みエラー</h3><p>サーバーの状態を確認してください</p></div>';
+                    return;
+                }
+
+                if (data.cameras.length === 0) {
+                    cameraList.innerHTML = '<div class="empty-state"><h3>カメラが登録されていません</h3><p>右上のボタンからカメラを追加してください</p></div>';
+                    return;
+                }
+
+                cameraList.innerHTML = data.cameras.map(camera => `
+                    <div class="camera-card">
+                        <h3>${camera.name}</h3>
+                        <div class="camera-info">
+                            <strong>ID:</strong> ${camera.id}
+                        </div>
+                        <div class="camera-info">
+                            <strong>RTSP:</strong> <small>${camera.rtsp_url}</small>
+                        </div>
+                        <div>
+                            ${camera.is_recording ?
+                                '<span class="status-badge status-recording">録画中</span>' :
+                                '<span class="status-badge status-stopped">停止中</span>'}
+                            ${!camera.enabled ?
+                                '<span class="status-badge status-disabled">無効</span>' : ''}
+                        </div>
+                        <div class="camera-actions">
+                            ${!camera.is_recording ?
+                                `<button class="btn btn-success" onclick="startRecording('${camera.id}')">録画開始</button>` :
+                                `<button class="btn btn-danger" onclick="stopRecording('${camera.id}')">録画停止</button>`}
+                            <button class="btn btn-danger" onclick="deleteCamera('${camera.id}')">削除</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('カメラ読み込みエラー:', error);
+                const cameraList = document.getElementById('cameraList');
+                cameraList.innerHTML = '<div class="empty-state"><h3>サーバー接続失敗</h3><p>サーバーが起動しているか確認してください</p></div>';
+            }
+        }
+
+        // カメラ追加モーダルを表示
+        function showAddCameraModal() {
+            document.getElementById('addCameraModal').style.display = 'block';
+        }
+
+        // カメラ追加モーダルを閉じる
+        function closeAddCameraModal() {
+            document.getElementById('addCameraModal').style.display = 'none';
+            document.getElementById('cameraId').value = '';
+            document.getElementById('cameraName').value = '';
+            document.getElementById('rtspUrl').value = '';
+            document.getElementById('cameraEnabled').checked = true;
+        }
+
+        // カメラを追加
+        async function addCamera(event) {
+            event.preventDefault();
+
+            const cameraData = {
+                id: document.getElementById('cameraId').value,
+                name: document.getElementById('cameraName').value,
+                rtsp_url: document.getElementById('rtspUrl').value,
+                enabled: document.getElementById('cameraEnabled').checked
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/cameras`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(cameraData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showNotification('カメラが追加されました', 'success');
+                    closeAddCameraModal();
+                    loadCameras();
+                    loadSystemStatus();
+                } else {
+                    showNotification('追加失敗: ' + (data.detail || '不明なエラー'), 'error');
+                }
+            } catch (error) {
+                console.error('カメラ追加エラー:', error);
+                showNotification('追加失敗：ネットワークエラー', 'error');
+            }
+        }
+
+        // 録画開始
+        async function startRecording(cameraId) {
+            try {
+                const response = await fetch(`${API_BASE}/recording/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ camera_id: cameraId })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showNotification('録画を開始しました', 'success');
+                    // 状態更新を確実に反映させるため短い遅延を追加
+                    setTimeout(() => {
+                        loadCameras();
+                        loadSystemStatus();
+                    }, 300);
+                } else {
+                    showNotification('開始失敗: ' + (data.detail || '不明なエラー'), 'error');
+                }
+            } catch (error) {
+                console.error('録画開始エラー:', error);
+                showNotification('開始失敗：ネットワークエラー', 'error');
+            }
+        }
+
+        // 録画停止
+        async function stopRecording(cameraId) {
+            try {
+                const response = await fetch(`${API_BASE}/recording/stop`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ camera_id: cameraId })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showNotification('録画を停止しました', 'success');
+                    // 状態更新を確実に反映させるため短い遅延を追加
+                    setTimeout(() => {
+                        loadCameras();
+                        loadSystemStatus();
+                    }, 300);
+                } else {
+                    showNotification('停止失敗: ' + (data.detail || '不明なエラー'), 'error');
+                }
+            } catch (error) {
+                console.error('録画停止エラー:', error);
+                showNotification('停止失敗：ネットワークエラー', 'error');
+            }
+        }
+
+        // カメラを削除
+        async function deleteCamera(cameraId) {
+            if (!confirm(`カメラ ${cameraId} を削除してもよろしいですか？`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/cameras/${cameraId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showNotification('カメラが削除されました', 'success');
+                    loadCameras();
+                    loadSystemStatus();
+                } else {
+                    showNotification('削除失敗: ' + (data.detail || '不明なエラー'), 'error');
+                }
+            } catch (error) {
+                console.error('カメラ削除エラー:', error);
+                showNotification('削除失敗：ネットワークエラー', 'error');
+            }
+        }
+
+        // 通知メッセージを表示
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 16px 28px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                z-index: 10000;
+                animation: slideIn 0.3s ease-out;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            `;
+
+            if (type === 'success') {
+                notification.style.background = 'linear-gradient(135deg, #66bb6a 0%, #4caf50 100%)';
+            } else if (type === 'error') {
+                notification.style.background = 'linear-gradient(135deg, #ef5350 0%, #f44336 100%)';
+            } else {
+                notification.style.background = 'linear-gradient(135deg, #42a5f5 0%, #2196f3 100%)';
+            }
+
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            // 3秒後に自動消去
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // CSSアニメーション
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // ページ読み込み時に実行
+        window.onload = function() {
+            loadSystemStatus();
+            loadCameras();
+
+            // 5秒ごとにステータスを更新
+            setInterval(() => {
+                loadSystemStatus();
+                loadCameras();
+            }, 5000);
+        };
+
+        // モーダル外をクリックして閉じる
+        window.onclick = function(event) {
+            const modal = document.getElementById('addCameraModal');
+            if (event.target === modal) {
+                closeAddCameraModal();
+            }
+        };
+    </script>
+</body>
+</html>

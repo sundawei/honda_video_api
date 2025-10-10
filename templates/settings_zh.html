@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统设置 - IP Camera Recorder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .nav {
+            background: #f5f5f5;
+            padding: 15px 30px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            margin-right: 20px;
+            font-weight: bold;
+        }
+
+        .nav a:hover {
+            text-decoration: underline;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .setting-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .setting-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .setting-item {
+            margin-bottom: 20px;
+        }
+
+        .setting-item label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .setting-item .description {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .setting-item input[type="number"],
+        .setting-item input[type="text"],
+        .setting-item select {
+            width: 100%;
+            max-width: 300px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        .setting-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #9e9e9e 0%, #757575 100%);
+            margin-left: 10px;
+        }
+
+        .save-status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .save-status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .save-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .current-value {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 3px 10px;
+            background: #e3f2fd;
+            border-radius: 3px;
+            font-size: 0.9em;
+            color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ 系统设置</h1>
+            <p>配置录像参数和系统选项</p>
+        </div>
+
+        <div class="nav">
+            <a href="/">← 返回首页</a>
+            <a href="/settings">系统设置</a>
+        </div>
+
+        <div class="content">
+            <form id="settingsForm">
+                <!-- 录像设置 -->
+                <div class="setting-section">
+                    <h2>📹 录像设置</h2>
+
+                    <div class="setting-item">
+                        <label>分段时长（秒）<span class="current-value" id="current_segment">当前: 加载中...</span></label>
+                        <div class="description">每个录像文件的时长，建议300-1800秒（5-30分钟）</div>
+                        <input type="number" id="segment_duration" name="segment_duration" min="60" max="3600" step="60" value="600">
+                    </div>
+
+                    <div class="setting-item">
+                        <label>录像保存目录<span class="current-value" id="current_dir">当前: 加载中...</span></label>
+                        <div class="description">录像文件保存位置（绝对或相对路径）</div>
+                        <input type="text" id="output_dir" name="output_dir" value="recordings">
+                    </div>
+                </div>
+
+                <!-- 存储管理 -->
+                <div class="setting-section">
+                    <h2>💾 存储管理</h2>
+
+                    <div class="setting-item">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="enable_auto_delete" name="enable_auto_delete" checked>
+                            <span>启用自动删除旧录像</span>
+                        </label>
+                        <div class="description">自动删除超过保留天数的录像文件</div>
+                    </div>
+
+                    <div class="setting-item">
+                        <label>录像保留天数<span class="current-value" id="current_retention">当前: 加载中...</span></label>
+                        <div class="description">超过此天数的录像将被自动删除，建议3-30天</div>
+                        <input type="number" id="retention_days" name="retention_days" min="1" max="365" value="7">
+                    </div>
+                </div>
+
+                <!-- FFmpeg设置 -->
+                <div class="setting-section">
+                    <h2>🎬 FFmpeg设置</h2>
+
+                    <div class="setting-item">
+                        <label>FFmpeg路径<span class="current-value" id="current_ffmpeg">当前: 加载中...</span></label>
+                        <div class="description">FFmpeg可执行文件路径，Windows下可填写完整路径</div>
+                        <input type="text" id="ffmpeg_path" name="ffmpeg_path" value="ffmpeg">
+                    </div>
+                </div>
+
+                <div class="save-status" id="saveStatus"></div>
+
+                <div style="margin-top: 30px;">
+                    <button type="submit" class="btn">💾 保存设置</button>
+                    <button type="button" class="btn btn-secondary" onclick="loadSettings()">🔄 重新加载</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        // 加载当前设置
+        async function loadSettings() {
+            try {
+                const response = await fetch(`${API_BASE}/settings`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const settings = data.settings;
+
+                    // 录像设置
+                    document.getElementById('segment_duration').value = settings.recording.segment_duration;
+                    document.getElementById('output_dir').value = settings.recording.output_dir;
+                    document.getElementById('enable_auto_delete').checked = settings.recording.enable_auto_delete;
+                    document.getElementById('retention_days').value = settings.recording.retention_days;
+
+                    // FFmpeg设置
+                    document.getElementById('ffmpeg_path').value = settings.ffmpeg.path;
+
+                    // 更新当前值显示
+                    document.getElementById('current_segment').textContent = `当前: ${settings.recording.segment_duration}秒`;
+                    document.getElementById('current_dir').textContent = `当前: ${settings.recording.output_dir}`;
+                    document.getElementById('current_retention').textContent = `当前: ${settings.recording.retention_days}天`;
+                    document.getElementById('current_ffmpeg').textContent = `当前: ${settings.ffmpeg.path}`;
+
+                    showStatus('设置加载成功', 'success');
+                } else {
+                    showStatus('加载设置失败', 'error');
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                showStatus('加载设置失败：网络错误', 'error');
+            }
+        }
+
+        // 保存设置
+        document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const settings = {
+                recording: {
+                    segment_duration: parseInt(document.getElementById('segment_duration').value),
+                    output_dir: document.getElementById('output_dir').value,
+                    enable_auto_delete: document.getElementById('enable_auto_delete').checked,
+                    retention_days: parseInt(document.getElementById('retention_days').value)
+                },
+                ffmpeg: {
+                    path: document.getElementById('ffmpeg_path').value
+                }
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/settings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showStatus('✅ 设置保存成功！新设置将在重启服务后生效。', 'success');
+                    // 重新加载以显示最新值
+                    setTimeout(() => loadSettings(), 1000);
+                } else {
+                    showStatus('❌ 保存失败: ' + (data.detail || data.message || '未知错误'), 'error');
+                }
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                showStatus('❌ 保存失败：网络错误', 'error');
+            }
+        });
+
+        // 显示状态消息
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('saveStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `save-status ${type}`;
+            statusDiv.style.display = 'block';
+
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // 页面加载时加载设置
+        window.onload = function() {
+            loadSettings();
+        };
+    </script>
+</body>
+</html>

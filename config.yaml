@@ -1,0 +1,24 @@
+cameras:
+- enabled: true
+  id: camera_01
+  name: test_camera_01
+  rtsp_url: rtsp://admin:Admin1234@192.168.31.14:554/main
+ffmpeg:
+  path: ffmpeg
+  reconnect: 1
+  reconnect_at_eof: 1
+  reconnect_delay_max: 5
+  reconnect_streamed: 1
+logging:
+  backup_count: 5
+  file: logs/recorder.log
+  level: INFO
+  max_bytes: 10485760
+recording:
+  enable_auto_delete: true
+  output_dir: recordings
+  retention_days: 7
+  segment_duration: 60
+server:
+  host: 127.0.0.1
+  port: 9999
