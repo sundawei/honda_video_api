@@ -4,8 +4,10 @@
 """
 
 import threading
+import shutil
 from typing import Dict, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
+from pathlib import Path
 import logging
 
 from recorder import VideoRecorder
@@ -119,6 +121,40 @@ class RecordingManager:
                 return self.recorders[camera_id].is_running
             return False
 
+    def cleanup_old_sessions(self, max_age_hours: int = 24):
+        """
+        清理旧的session目录
+
+        Args:
+            max_age_hours: 保留时间（小时），超过此时间的session目录会被删除
+        """
+        try:
+            sessions_dir = Path(self.output_dir) / "sessions"
+            if not sessions_dir.exists():
+                return
+
+            cutoff_time = datetime.now() - timedelta(hours=max_age_hours)
+            cleaned_count = 0
+
+            for session_dir in sessions_dir.iterdir():
+                if session_dir.is_dir():
+                    try:
+                        # 获取目录的修改时间
+                        dir_mtime = datetime.fromtimestamp(session_dir.stat().st_mtime)
+
+                        if dir_mtime < cutoff_time:
+                            # 删除旧的session目录
+                            shutil.rmtree(session_dir)
+                            cleaned_count += 1
+                            logger.info(f"Cleaned up old session directory: {session_dir.name}")
+                    except Exception as e:
+                        logger.warning(f"Failed to clean up session directory {session_dir.name}: {e}")
+
+            if cleaned_count > 0:
+                logger.info(f"Cleaned up {cleaned_count} old session directories")
+        except Exception as e:
+            logger.error(f"Error cleaning up session directories: {e}")
+
     def query_recordings(self, camera_id: str, start_time: datetime, end_time: datetime) -> dict:
         """
         查询指定时间段的录像
@@ -132,6 +168,9 @@ class RecordingManager:
             录像文件信息
         """
         import time
+
+        # 先清理旧的session目录（避免累积）
+        self.cleanup_old_sessions(max_age_hours=24)
 
         # 检查摄像机是否存在
         camera = self.camera_manager.get_camera(camera_id)
