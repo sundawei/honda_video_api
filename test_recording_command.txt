@@ -1,0 +1,232 @@
+====================================
+IP Camera Recorder - 录像命令测试脚本
+====================================
+
+根据你的配置文件 config.yaml：
+- 摄像机ID: camera_01
+- RTSP URL: rtsp://admin:Admin1234@192.168.31.14:554/main
+- 输出目录: recordings/camera_01
+- 分段时长: 60秒
+
+====================================
+1. 基本录像测试命令（60秒分段）
+====================================
+
+ffmpeg \
+  -rtsp_transport tcp \
+  -timeout 10000000 \
+  -analyzeduration 10000000 \
+  -probesize 10000000 \
+  -i rtsp://admin:Admin1234@192.168.31.14:554/main \
+  -c:v copy \
+  -c:a copy \
+  -t 60 \
+  -err_detect ignore_err \
+  -max_error_rate 0.5 \
+  -movflags +faststart+frag_keyframe+empty_moov \
+  -y \
+  recordings/camera_01/test_recording_$(date +%Y%m%d_%H%M%S).mp4
+
+
+====================================
+2. 简化版测试命令（10秒测试）
+====================================
+
+ffmpeg \
+  -rtsp_transport tcp \
+  -timeout 10000000 \
+  -i rtsp://admin:Admin1234@192.168.31.14:554/main \
+  -c:v copy \
+  -c:a copy \
+  -t 10 \
+  -y \
+  test_output.mp4
+
+
+====================================
+3. 详细参数说明
+====================================
+
+传输和连接参数:
+  -rtsp_transport tcp          # 使用TCP传输（更稳定，推荐）
+  -timeout 10000000            # RTSP超时10秒（单位：微秒）
+  -analyzeduration 10000000    # 分析流格式的时长：10秒（单位：微秒）
+  -probesize 10000000          # 探测大小：10MB
+
+输入源:
+  -i <RTSP_URL>               # RTSP流地址
+
+编码参数:
+  -c:v copy                   # 视频流直接复制（不重新编码，性能最好）
+  -c:a copy                   # 音频流直接复制
+
+录制时长:
+  -t 60                       # 录制60秒后自动停止
+
+错误处理:
+  -err_detect ignore_err      # 忽略非致命错误
+  -max_error_rate 0.5         # 容忍50%的错误率
+
+MP4优化:
+  -movflags +faststart+frag_keyframe+empty_moov
+                              # MP4流媒体优化参数
+                              # faststart: 元数据前置，支持快速播放
+                              # frag_keyframe: 关键帧分片
+                              # empty_moov: 空moov容器，允许流式写入
+
+输出控制:
+  -y                          # 自动覆盖已存在的文件
+
+
+====================================
+4. Windows命令行格式
+====================================
+
+在Windows CMD中运行（单行格式）:
+
+ffmpeg -rtsp_transport tcp -timeout 10000000 -analyzeduration 10000000 -probesize 10000000 -i rtsp://admin:Admin1234@192.168.31.14:554/main -c:v copy -c:a copy -t 60 -err_detect ignore_err -max_error_rate 0.5 -movflags +faststart+frag_keyframe+empty_moov -y test_output.mp4
+
+
+====================================
+5. Linux/Mac 命令行格式
+====================================
+
+在 Linux/Mac 终端运行（单行格式）:
+
+ffmpeg -rtsp_transport tcp -timeout 10000000 -analyzeduration 10000000 -probesize 10000000 -i rtsp://admin:Admin1234@192.168.31.14:554/main -c:v copy -c:a copy -t 60 -err_detect ignore_err -max_error_rate 0.5 -movflags +faststart+frag_keyframe+empty_moov -y test_output.mp4
+
+
+====================================
+6. 诊断步骤
+====================================
+
+步骤1: 测试FFmpeg是否安装
+  ffmpeg -version
+
+步骤2: 测试RTSP连接（不录像，只查看流信息）
+  ffmpeg -rtsp_transport tcp -i rtsp://admin:Admin1234@192.168.31.14:554/main -t 1 -f null -
+
+步骤3: 录制10秒测试视频
+  ffmpeg -rtsp_transport tcp -i rtsp://admin:Admin1234@192.168.31.14:554/main -c copy -t 10 test_10s.mp4
+
+步骤4: 使用完整参数录制60秒
+  （使用上面第4或第5部分的完整命令）
+
+步骤5: 检查输出文件
+  # Windows:
+  dir test_output.mp4
+
+  # Linux/Mac:
+  ls -lh test_output.mp4
+
+  # 查看视频信息:
+  ffprobe test_output.mp4
+
+
+====================================
+7. 常见问题诊断
+====================================
+
+问题A: 连接超时
+  症状: "Connection timed out" 或 "timeout"
+  可能原因:
+    - RTSP URL错误
+    - 网络不通
+    - 摄像机关闭或不支持RTSP
+  测试方法:
+    ping 192.168.31.14
+    telnet 192.168.31.14 554
+
+问题B: 认证失败
+  症状: "401 Unauthorized" 或 "authentication failed"
+  可能原因:
+    - 用户名或密码错误
+    - RTSP URL格式错误
+  解决方法:
+    - 检查用户名和密码
+    - 尝试浏览器访问摄像机管理界面确认凭据
+
+问题C: 编码格式不支持
+  症状: "codec not supported" 或 "unsupported codec"
+  可能原因:
+    - 摄像机使用的编码格式FFmpeg不支持
+  解决方法:
+    - 先不使用 -c copy，让FFmpeg重新编码:
+      -c:v libx264 -c:a aac
+
+问题D: 录制一段时间后停止
+  症状: 录制几分钟后自动停止
+  可能原因:
+    - 网络不稳定
+    - 摄像机超时断开
+    - 存储空间不足
+  解决方法:
+    - 增加timeout参数值
+    - 使用TCP传输（已设置）
+    - 检查磁盘空间
+
+问题E: 文件大小为0或很小
+  症状: 录制完成但文件很小
+  可能原因:
+    - 流数据未正确接收
+    - 编码参数不匹配
+  解决方法:
+    - 查看FFmpeg详细输出（去掉 -y 参数）
+    - 增加 -v verbose 参数查看详细日志
+
+
+====================================
+8. 调试命令（保存详细日志）⭐推荐
+====================================
+
+Windows CMD命令（保存日志）:
+
+ffmpeg -v verbose -rtsp_transport tcp -timeout 10000000 -analyzeduration 10000000 -probesize 10000000 -i rtsp://admin:Admin1234@192.168.31.14:554/main -c:v copy -c:a copy -t 60 -y test_output.mp4 > ffmpeg_log.txt 2>&1
+
+注意: 这会将所有输出保存到 ffmpeg_log.txt 文件中
+
+
+Linux/Mac命令（保存日志并同时显示）:
+
+ffmpeg -v verbose -rtsp_transport tcp -timeout 10000000 -analyzeduration 10000000 -probesize 10000000 -i rtsp://admin:Admin1234@192.168.31.14:554/main -c:v copy -c:a copy -t 60 -y test_output.mp4 2>&1 | tee ffmpeg_log.txt
+
+注意: 这会将输出保存到 ffmpeg_log.txt，同时在终端显示
+
+
+更详细的调试级别（Windows）:
+
+ffmpeg -v debug -report -rtsp_transport tcp -timeout 10000000 -analyzeduration 10000000 -probesize 10000000 -i rtsp://admin:Admin1234@192.168.31.14:554/main -c:v copy -c:a copy -t 60 -y test_output.mp4 > ffmpeg_detailed_log.txt 2>&1
+
+注意:
+- 使用 -v debug 会输出最详细的信息
+- 使用 -report 会自动生成一个 ffmpeg-*.log 报告文件
+- 同时会生成 ffmpeg_detailed_log.txt 文件
+
+
+====================================
+9. 替代RTSP URL测试
+====================================
+
+如果主码流不工作，尝试子码流:
+
+rtsp://admin:Admin1234@192.168.31.14:554/sub
+
+或者尝试其他常见的RTSP路径:
+- rtsp://admin:Admin1234@192.168.31.14:554/stream1
+- rtsp://admin:Admin1234@192.168.31.14:554/h264
+- rtsp://admin:Admin1234@192.168.31.14:554/live
+- rtsp://admin:Admin1234@192.168.31.14:554/Streaming/Channels/101
+
+
+====================================
+10. 推荐测试顺序
+====================================
+
+1. 先运行步骤6的"步骤1"确认FFmpeg已安装
+2. 运行"步骤2"测试RTSP连接是否正常
+3. 运行"步骤3"录制10秒测试
+4. 如果成功，运行完整的60秒录制测试
+5. 如果失败，运行第8部分的调试命令，查看详细日志
+6. 根据错误信息参考第7部分"常见问题诊断"
+
+将测试结果和错误日志发给我，我可以帮你进一步诊断问题！
