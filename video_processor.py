@@ -60,8 +60,28 @@ class VideoProcessor:
             )
 
             if result.returncode == 0:
-                logger.info(f"Successfully extracted video to {output_file}")
-                return True
+                # 验证输出文件是否有效（大小检查）
+                if os.path.exists(output_file):
+                    file_size = os.path.getsize(output_file)
+                    # 文件必须大于100KB才认为是有效的视频文件
+                    # 小于100KB通常只包含MP4容器头，没有实际视频数据
+                    min_valid_size = 100 * 1024  # 100KB
+
+                    if file_size > min_valid_size:
+                        logger.info(f"Successfully extracted video to {output_file} (size: {file_size / 1024 / 1024:.2f} MB)")
+                        return True
+                    else:
+                        logger.warning(f"Extracted file too small ({file_size} bytes, < {min_valid_size} bytes), likely invalid")
+                        # 删除无效文件
+                        try:
+                            os.remove(output_file)
+                            logger.info(f"Removed invalid file: {output_file}")
+                        except Exception as e:
+                            logger.error(f"Failed to remove invalid file: {e}")
+                        return False
+                else:
+                    logger.error(f"Output file not created: {output_file}")
+                    return False
             else:
                 logger.error(f"FFmpeg error: {result.stderr}")
                 return False
@@ -233,6 +253,14 @@ class RecordingSession:
                 extract_start = max(0, (self.start_time - file_start_time).total_seconds())
                 extract_end = (self.end_time - file_start_time).total_seconds()
                 extract_duration = extract_end - extract_start
+
+                # 最小片段时长阈值（秒）
+                min_clip_duration = 5.0  # 小于5秒的片段通常质量不佳，容易出现问题
+
+                # 检查片段时长是否太短
+                if extract_duration < min_clip_duration:
+                    logger.warning(f"Skipping clip from {file_path}: duration too short ({extract_duration:.1f}s < {min_clip_duration}s)")
+                    continue
 
                 # 如果需要提取的是整个文件
                 if extract_start == 0 and extract_end >= (file_end_time - file_start_time).total_seconds():
