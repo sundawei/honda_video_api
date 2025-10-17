@@ -215,6 +215,23 @@ def create_app() -> FastAPI:
             cleanup_thread.start()
             logger.info("Auto cleanup thread started")
 
+        # 自动开始录像（如果有已配置的相机）
+        cameras = camera_manager.list_cameras()
+        started_count = 0
+        for camera in cameras:
+            if camera.enabled:
+                try:
+                    recording_manager.start_recording(camera.id)
+                    started_count += 1
+                    logger.info(f"Auto-started recording for camera: {camera.id} ({camera.name})")
+                except Exception as e:
+                    logger.error(f"Failed to auto-start recording for camera {camera.id}: {e}")
+
+        if started_count > 0:
+            logger.info(f"Auto-started recording for {started_count} camera(s)")
+        else:
+            logger.info("No cameras configured or enabled for auto-start")
+
         yield
 
         # 关闭时执行
