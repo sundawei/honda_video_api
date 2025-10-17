@@ -169,6 +169,14 @@ class RecordingManager:
         """
         import time
 
+        # logger.info("=" * 80)
+        # logger.info(f"[QUERY] 开始查询录像")
+        # logger.info(f"[QUERY] Camera ID: {camera_id}")
+        # logger.info(f"[QUERY] Start Time: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        # logger.info(f"[QUERY] End Time: {end_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        # logger.info(f"[QUERY] Duration: {(end_time - start_time).total_seconds() / 60:.2f} minutes")
+        # logger.info("=" * 80)
+
         # 先清理旧的session目录（避免累积）
         self.cleanup_old_sessions(max_age_hours=24)
 
@@ -216,8 +224,14 @@ class RecordingManager:
         # 获取时间段内的录像文件
         video_files = recorder.get_recorded_files(start_time, end_time)
 
+        # logger.info(f"[QUERY] 找到 {len(video_files)} 个录像文件")
+        # for i, vf in enumerate(video_files, 1):
+        #     logger.info(f"[QUERY] 文件 {i}: {vf['filename']}")
+        #     logger.info(f"         时间: {vf['start_time']} to {vf.get('end_time', 'Unknown')}")
+        #     logger.info(f"         时长: {vf.get('duration', 0):.1f} seconds")
+
         if not video_files:
-            logger.info(f"No recordings found for camera {camera_id} between {start_time} and {end_time}")
+            logger.info(f"[QUERY] No recordings found for camera {camera_id} between {start_time} and {end_time}")
             return {
                 "camera_id": camera_id,
                 "start_time": start_time.isoformat(),
@@ -237,7 +251,18 @@ class RecordingManager:
 
         # 处理并返回结果
         result = session.get_result()
-        logger.info(f"Query result for camera {camera_id}: {len(result['files'])} files found")
+
+        # logger.info("=" * 80)
+        # logger.info(f"[QUERY RESULT] Session目录: {session.session_dir}")
+        # logger.info(f"[QUERY RESULT] 返回文件数: {len(result['files'])}")
+        # total_size = sum(f['size'] for f in result['files'])
+        # logger.info(f"[QUERY RESULT] 总文件大小: {total_size / 1024 / 1024:.2f} MB")
+
+        # for i, f in enumerate(result['files'], 1):
+        #     logger.info(f"[QUERY RESULT] 文件 {i}: {f['filename']}")
+        #     logger.info(f"               路径: {f['path']}")
+        #     logger.info(f"               大小: {f['size'] / 1024 / 1024:.2f} MB")
+        # logger.info("=" * 80)
 
         return result
 

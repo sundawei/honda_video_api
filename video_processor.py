@@ -5,6 +5,7 @@
 
 import subprocess
 import os
+import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Tuple
@@ -216,12 +217,18 @@ class RecordingSession:
         self.output_dir = output_dir
         self.processor = VideoProcessor(ffmpeg_path)
 
-        # 创建会话输出目录
+        # 创建会话输出目录（添加毫秒和唯一ID以避免冲突）
+        # 格式: camera_id_YYYYMMDD_HHMMSS_mmm_uid
+        timestamp_str = start_time.strftime('%Y%m%d_%H%M%S_%f')[:-3]  # 包含毫秒，截取到毫秒（去掉后3位微秒）
+        unique_id = str(uuid.uuid4())[:8]  # 使用UUID的前8位作为唯一标识
         self.session_dir = os.path.join(
             output_dir,
-            f"sessions/{camera_id}_{start_time.strftime('%Y%m%d_%H%M%S')}"
+            f"sessions/{camera_id}_{timestamp_str}_{unique_id}"
         )
         Path(self.session_dir).mkdir(parents=True, exist_ok=True)
+
+        # logger.info(f"[SESSION] Created session directory: {self.session_dir}")
+        # logger.info(f"[SESSION] Processing {len(video_files)} video files")
 
     def process(self) -> List[str]:
         """
@@ -237,22 +244,35 @@ class RecordingSession:
                 file_path = file_info['path']
                 file_start_time = datetime.fromisoformat(file_info['start_time'])
 
-                # 估算文件结束时间（使用下一个文件的开始时间，或当前时间）
-                if idx + 1 < len(self.video_files):
-                    file_end_time = datetime.fromisoformat(self.video_files[idx + 1]['start_time'])
+                # logger.info(f"[PROCESS] 处理文件 {idx+1}: {file_info['filename']}")
+
+                # 使用文件自身的结束时间（从文件名中解析得到）
+                # 如果文件信息中没有end_time，则使用实际视频时长
+                if file_info.get('end_time'):
+                    file_end_time = datetime.fromisoformat(file_info['end_time'])
+                    # logger.info(f"[PROCESS]   文件时间: {file_start_time.strftime('%H:%M:%S')} - {file_end_time.strftime('%H:%M:%S')}")
                 else:
-                    # 最后一个文件，使用实际视频时长
+                    # 降级处理：获取实际视频时长
                     duration = self.processor.get_video_duration(file_path)
                     file_end_time = file_start_time + timedelta(seconds=duration)
+                    # logger.info(f"[PROCESS]   文件时间(估算): {file_start_time.strftime('%H:%M:%S')} - {file_end_time.strftime('%H:%M:%S')}")
 
                 # 检查文件是否与时间段有交集
                 if file_end_time < self.start_time or file_start_time > self.end_time:
+                    # logger.info(f"[PROCESS]   跳过: 文件不在查询时间段内")
                     continue
 
                 # 计算需要提取的时间段
                 extract_start = max(0, (self.start_time - file_start_time).total_seconds())
-                extract_end = (self.end_time - file_start_time).total_seconds()
+                # extract_end 不能超过文件的实际时长
+                extract_end = min(
+                    (self.end_time - file_start_time).total_seconds(),
+                    (file_end_time - file_start_time).total_seconds()
+                )
                 extract_duration = extract_end - extract_start
+
+                # logger.info(f"[PROCESS]   查询时段: {self.start_time.strftime('%H:%M:%S')} - {self.end_time.strftime('%H:%M:%S')}")
+                # logger.info(f"[PROCESS]   提取参数: start={extract_start:.1f}s, end={extract_end:.1f}s, duration={extract_duration:.1f}s")
 
                 # 最小片段时长阈值（秒）
                 min_clip_duration = 5.0  # 小于5秒的片段通常质量不佳，容易出现问题
@@ -262,16 +282,19 @@ class RecordingSession:
                     logger.warning(f"Skipping clip from {file_path}: duration too short ({extract_duration:.1f}s < {min_clip_duration}s)")
                     continue
 
-                # 如果需要提取的是整个文件
-                if extract_start == 0 and extract_end >= (file_end_time - file_start_time).total_seconds():
-                    logger.info(f"Using entire file: {file_path}")
+                # 如果需要提取的是整个文件（或接近整个文件，允许1秒误差）
+                file_duration = (file_end_time - file_start_time).total_seconds()
+                if extract_start <= 1.0 and abs(extract_end - file_duration) <= 1.0:
+                    # logger.info(f"[PROCESS]   决定: 使用整个文件 (文件时长={file_duration:.1f}s)")
+                    # logger.info(f"[PROCESS]   添加原文件: {file_path}")
                     processed_files.append(file_path)
                 else:
                     # 需要裁剪
                     output_filename = f"clip_{idx:03d}_{os.path.basename(file_path)}"
                     output_path = os.path.join(self.session_dir, output_filename)
 
-                    logger.info(f"Extracting clip from {file_path}: start={extract_start}s, duration={extract_duration}s")
+                    # logger.info(f"[PROCESS]   决定: 需要截取 (start={extract_start:.1f}s, duration={extract_duration:.1f}s)")
+                    # logger.info(f"[PROCESS]   输出文件: {output_filename}")
 
                     if self.processor.extract_time_range(
                         file_path, output_path,
@@ -279,8 +302,9 @@ class RecordingSession:
                         duration=extract_duration
                     ):
                         processed_files.append(output_path)
+                        # logger.info(f"[PROCESS]   截取成功")
                     else:
-                        logger.error(f"Failed to extract clip from {file_path}")
+                        logger.error(f"[PROCESS]   截取失败！")
 
             logger.info(f"Processed {len(processed_files)} video clips for session")
 
